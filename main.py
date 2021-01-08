@@ -9,8 +9,8 @@ import random
 # todo ? ll top                              ---------DONE
 # todo entropy ll parent =                   ---------DONE
 # todo entropies ll children                 ---------DONE
-# todo inf gain 3la asasha a split
-# todo after splitting, ne7seb entropy ll
+# todo inf gain 3la asasha a split           ---------DONE
+# todo after splitting, ne7seb entropy ll    ---------DONE
 
 
 class Node:
@@ -46,6 +46,37 @@ class Node:
     def set_attr(self, attr):
         self.attr = attr
 
+    # Function to print the tree
+    # self is the starting node
+    # def BFS(self):
+    #
+    #     # Mark all the vertices as not visited
+    #     visited = [False] * (max(self.graph) + 1)
+    #
+    #     # Create a queue for BFS
+    #     queue = []
+    #
+    #     # Mark the source node as
+    #     # visited and enqueue it
+    #     queue.append(self)
+    #     visited[self] = True
+    #
+    #     while queue:
+    #
+    #         # Dequeue a vertex from
+    #         # queue and print it
+    #         s = queue.pop(0)
+    #         print(s, end=" ")
+    #
+    #         # Get all adjacent vertices of the
+    #         # dequeued vertex s. If a adjacent
+    #         # has not been visited, then mark it
+    #         # visited and enqueue it
+    #         for i in self.graph[s]:
+    #             if visited[i] == False:
+    #                 queue.append(i)
+    #                 visited[i] = True
+
 
 def train_test_split(df, test_size):
     indices = df.index.tolist()
@@ -56,11 +87,11 @@ def train_test_split(df, test_size):
     return train_df, test_df
 
 
-def check_duplication(df_):
-    df = df_
+def check_duplication(df):
+    duplicats_indecis =[]
     duplicated = False
     for row in range(df.shape[0]):
-        for i in range(df.shape[0]):
+        for i in range(row, df.shape[0]):
             for col in range(df.shape[1]-1):
                 if df.loc[i, col] == df.loc[row, col]:
                     duplicated = True
@@ -69,10 +100,12 @@ def check_duplication(df_):
                     break
             if duplicated:
                 if df.loc[i, 16] != df.loc[row, 16]:
-                    df.drop(i)
-                    print("here")
+                    duplicats_indecis.append(i)
                 else:
                     continue
+    for y in range(len(duplicats_indecis)-1, -1, -1):
+        index = duplicats_indecis[y]
+        df = df.drop([index], axis='index')
     return df
 
 
@@ -128,26 +161,24 @@ def best_attribute(subset_data):
     information_gain = []
     for i in range(0, subset_data.shape[1] - 1):
         information_gain.append(calculate_information_gain(subset_data, 16, i))
-    print("info gain")
-    print(information_gain)
     best_attr = np.argmax(information_gain)
     return best_attr
 
 
 def subset(s_data, attribute):
     values = np.unique(s_data[attribute])
-    print("attribute")
-    print(attribute)
-    print("subset values")
-    print(values)
-    print("data set")
-    print(s_data)
+    # print("attribute")
+    # print(attribute)
+    # print("subset values")
+    # print(values)
+    # print("data set")
+    # print(s_data)
     subset1 = s_data[s_data[attribute] == values[0]]
     subset2 = s_data[s_data[attribute] == values[1]]
     return subset1, subset2, values[0], values[1]
 
 
-def build_decision_tree(subset_data, parent, Root, count=None):
+def build_decision_tree(subset_data, parent=None, Root=None, count=0):
     split_attribute = best_attribute(subset_data)
 
     # leaf node
@@ -165,20 +196,9 @@ def build_decision_tree(subset_data, parent, Root, count=None):
         child2 = Node(child2_data, root, None, None, calculate_entropy(child2_data), child2_value, split_attribute)
         root.set_child1(child1)
         root.set_child2(child2)
-        # print(" root data set")
-        # print(root.data_set)
-        # print(" root split attribute")
-        # print(split_attribute)
-        # print(" root parent")
-        # print(root.parent)
-        # print(" root entropy")
-        # print(root.entropy)
-        # print(" root child1 value")
-        # print(root.child1.value)
-        # print(" root child2 value")
-        # print(root.child2.value)
         build_decision_tree(child1_data, child1, root, 1)
         build_decision_tree(child2_data, child2, root, 1)
+        return root, count
         # return Node(Root.data_set, Root.parent, Root.child1, Root.child2, Root.entropy, Root.value, Root.attr)
 
     # sub trees
@@ -213,40 +233,31 @@ train_dataset.reset_index(inplace=True, drop=True)
 test_dataset.reset_index(inplace=True, drop=True)
 # build_decision_tree(train_dataset)
 
-# print("train")
-# print(train_dataset)
-# print("test")
-# print(test_dataset)
-
 train_dataset = replace(train_dataset)
 test_dataset = replace(test_dataset)
 
 train_dataset = check_duplication(train_dataset)
-test_dataset = check_duplication(test_dataset)
+# test_dataset = check_duplication(test_dataset)
 
 train_dataset.reset_index(inplace=True, drop=True)
-test_dataset.reset_index(inplace=True, drop=True)
+# test_dataset.reset_index(inplace=True, drop=True)
 
 data = train_dataset.values
 
-# if purity_check(data):
-#     classification(data)
-# else:
-#     split = to_split(data)
 print("train")
 print(train_dataset)
 print("test")
 print(test_dataset)
-print("\n \n")
-print(train_dataset.describe())
-print(train_dataset.loc[1, 1])
-print(train_dataset.shape[0])  # rows
-print(train_dataset.shape[1])  # cols
+# print("\n \n")
+# print(train_dataset.describe())
+# print(train_dataset.loc[1, 1])
+# print(train_dataset.shape[0])  # rows
+# print(train_dataset.shape[1])  # cols
 # print(train_dataset.describe().loc['top', 0])
 # node = Node(train_dataset, None, None, None, 15, None, None)
-node = build_decision_tree(train_dataset, None, None)
+node = build_decision_tree(train_dataset)
 # print(node)
-# print(node.entropy)
+print(node.entropy)
 
 # print(train_dataset[train_dataset[0] == 'n'])
 # print("subset col 0 \n ")
