@@ -218,12 +218,7 @@ def predictData(test_row, decision_tree, i):
         child1_node = decision_tree.child1
         child2_node = decision_tree.child2
         child1_value = child1_node.value
-        child2_value = child2_node.value
         test_cell = test_row.loc[i, current_attr]
-        # print(test_cell)
-        # print(child1_value)
-        # print(child2_value)
-        # print(current_attr)
         if test_cell == child1_value:
             return predictData(test_row, child1_node, i)
         else:
@@ -233,29 +228,69 @@ def predictData(test_row, decision_tree, i):
         return decision_tree.classification
 
 
-dataset = pd.read_csv('dataSet.csv', header=None)
-train_dataset, test_dataset = train_test_split(dataset, test_size=0.25)
-train_dataset.reset_index(inplace=True, drop=True)
-test_dataset.reset_index(inplace=True, drop=True)
+def tree_size(root, count):
+    if root.child1 is not None:
+        count = tree_size(root.child1, count+1)
+        count = tree_size(root.child2, count+1)
+        return count
+    else:
+        return count
 
-train_dataset = replace(train_dataset)
-test_dataset = replace(test_dataset)
 
-train_dataset = check_duplication(train_dataset)
-train_dataset.reset_index(inplace=True, drop=True)
+def main(training_size):
+    dataset = pd.read_csv('dataSet.csv', header=None)
+    accuracy_list = []
+    trees_sizes = []
+    for i in range(0, 5):
+        train_dataset, test_dataset = train_test_split(dataset, test_size=training_size)
+        train_dataset.reset_index(inplace=True, drop=True)
+        test_dataset.reset_index(inplace=True, drop=True)
 
-print("train")
-print(train_dataset)
-node = build_decision_tree(train_dataset)
+        train_dataset = replace(train_dataset)
+        test_dataset = replace(test_dataset)
 
-correct_predections =0
-for i in range(test_dataset.shape[0]):
-    decision = predictData(test_dataset.loc[[i]], node, i)
-    if decision == test_dataset.loc[i, 16]:
-        correct_predections += 1
-    # print("predicted decision: ", decision)
-    # print(test_dataset.loc[[i]])
-print(correct_predections/len(test_dataset) * 100)
+        train_dataset.reset_index(inplace=True, drop=True)
+        train_dataset = check_duplication(train_dataset)
+        train_dataset.reset_index(inplace=True, drop=True)
+
+        # print("train")
+        # print(train_dataset)
+        node = build_decision_tree(train_dataset)
+        s_tree = tree_size(node, 1)
+        correct_predections = 0
+        for i in range(test_dataset.shape[0]):
+            decision = predictData(test_dataset.loc[[i]], node, i)
+            if decision == test_dataset.loc[i, 16]:
+                correct_predections += 1
+        accuracy = (correct_predections/len(test_dataset) * 100)
+        accuracy_list.append(accuracy)
+        trees_sizes.append(s_tree)
+
+    max_accuracy = np.max(accuracy_list)
+    max_tree_size = np.max(trees_sizes)
+
+    min_accuracy = np.min(accuracy_list)
+    min_tree_size = np.min(trees_sizes)
+
+    mean_accuracies = np.mean(accuracy_list)
+    mean_tree_sizes = np.mean(trees_sizes)
+
+    print("For training size ", training_size, "  :")
+    print("")
+    print("Max accuracy :", max_accuracy)
+    print("Min accuracy :", min_accuracy)
+    print("Mean accuracy :", mean_accuracies)
+    print("")
+    print("Max tree size :", max_tree_size)
+    print("Min tree size :", min_tree_size)
+    print("Mean tree size :", mean_tree_sizes)
+    print("\n-------------------------------------------------------\n")
+
+for i in range(30, 80, 10):
+    size = i/100
+    main(size)
+
+# main(0.30)
 # print("\n \n")
 # print(train_dataset.describe())
 # print(train_dataset.loc[1, 1])
