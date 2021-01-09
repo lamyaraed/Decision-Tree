@@ -96,7 +96,9 @@ def check_duplication(df):
                     duplicated = False
                     break
             if duplicated:
-                if df.loc[i, 16] != df.loc[row, 16]:
+                if i in duplicats_indecis:
+                    continue
+                elif df.loc[i, 16] != df.loc[row, 16]:
                     duplicats_indecis.append(i)
                 else:
                     continue
